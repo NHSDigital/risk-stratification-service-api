@@ -117,7 +117,7 @@ Redeploy the API Proxy and hosted Sandbox service.
 Successful deployment of the API Proxy requires:
 
  1. A *Target Server* named `risk-stratification-target`
- 2. A *Key-Value Map* named `risk-variables`, containing any values you might need at proxy runtime
- 2. A *Key-Value Map* named `risk-variables-encrypted`, containing any secrets you might need at proxy runtime
+ 2. A *Key-Value Map* named `rs-variables`, containing any values you might need at proxy runtime
+ 2. A *Key-Value Map* named `rs-variables-encrypted`, containing any secrets you might need at proxy runtime
 
 :bulb: For Sandbox-running environments (`test`) these need to be present for successful deployment but can be set to empty/dummy values.

@@ -1,126 +1,378 @@
-openapi: "3.0.0"
+openapi: 3.0.0
 x-nhsd-api-platform:
   meta:
     name: Risk Stratification Service
     canonical_name: risk-stratification
-    short_name: risk
-    description: "The Risk Stratification Service calculates the risk to patients from conditions such as Covid19"
-    pipeline_name_prefix: "Risk-Stratification"
-  base_path: "risk-stratification"
+    short_name: rs
+    description: The Risk Stratification Service calculates the risk to patients from conditions such as Covid19
+    pipeline_name_prefix: risk-stratification
+  base_path: risk-stratification
 info:
-  version: 1.0.0
-  title: Risk Stratification Service 
-  contact:
-    name: API Support
-    email: support@example.com
-    url: http://example.com/support
-  license:
-    name: MIT
-tags:
-  - name: nhs
-    description: NHS
-servers:
-  - url: http://petstore.swagger.io
+  title: Risk Stratification Service
+  description: Provides risk stratification index values based on user parameters
+  version: 0.1.0
 paths:
-  /pets:
-    get:
-      summary: List all pets
-      operationId: listPets
-      tags:
-        - pets
-      parameters:
-        - name: limit
-          in: query
-          description: How many items to return at one time (max 100)
-          required: false
-          schema:
-            type: integer
-            format: int32
-      responses:
-        '200':
-          description: A paged array of pets
-          headers:
-            x-next:
-              description: A link to the next page of responses
-              schema:
-                type: string
-          content:
-            application/json:    
-              schema:
-                $ref: "#/components/schemas/Pets"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+  /qcovid:
     post:
-      summary: Create a pet
-      operationId: createPets
-      tags:
-        - pets
+      summary: Calculates risk stratification index for COVID-19
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Observation"
       responses:
-        '201':
-          description: Null response
-        default:
-          description: unexpected error
+        "200":
+          description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-  /pets/{petId}:
-    get:
-      summary: Info for a specific pet
-      operationId: showPetById
-      tags:
-        - pets
-      parameters:
-        - name: petId
-          in: path
-          required: true
-          description: The id of the pet to retrieve
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Expected response to a valid request
+                $ref: "#/components/schemas/RiskAssessment"
+        "400":
+          description: BadRequest
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pet"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+                type: object
+                properties:
+                  traceId:
+                    type: string
+                    minLength: 1
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                          minLength: 1
+                        error:
+                          type: string
+                          minLength: 1
 components:
   schemas:
-    Pet:
-      type: object
-      required:
-        - id
-        - name
+    RiskAssessment:
+      description: An assessment of the likely outcome(s) for a patient or other
+        subject as well as the likelihood of each outcome.
       properties:
-        id:
-          type: integer
-          format: int64
-        name:
+        resourceType:
+          description: This is a RiskAssessment resource
           type: string
-        tag:
+          enum:
+            - RiskAssessment
+        meta: {}
+        language: {}
+        text: {}
+        contained:
+          description: These resources do not have an independent existence apart from the
+            resource that contains them - they cannot be identified
+            independently, and nor can they have their own independent
+            transaction scope.
+          items:
+            $ref: "#/components/schemas/ResourceList"
+          type: array
+        status:
+          $ref: "#/components/schemas/RiskAssessment/properties/language"
+        method:
+          $ref: "#/components/schemas/Observation/properties/code"
+        code:
+          $ref: "#/components/schemas/Observation/properties/code"
+        encounter:
+          $ref: "#/components/schemas/Observation/properties/subject"
+        occurrenceDateTime:
+          description: The date (and possibly time) the risk assessment was performed.
+          pattern: ^([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?$
           type: string
-    Pets:
-      type: array
-      items:
-        $ref: "#/components/schemas/Pet"
-    Error:
-      type: object
+        condition:
+          $ref: "#/components/schemas/Observation/properties/subject"
+        performer:
+          $ref: "#/components/schemas/Observation/properties/subject"
+        reasonCode:
+          description: The reason the risk assessment was performed.
+          items:
+            $ref: "#/components/schemas/Observation/properties/code"
+          type: array
+        reasonReference:
+          description: Resources supporting the reason the risk assessment was performed.
+          items:
+            $ref: "#/components/schemas/Observation/properties/subject"
+          type: array
+        basis:
+          description: Indicates the source data considered as part of the assessment (for
+            example, FamilyHistory, Observations, Procedures, Conditions, etc.).
+          items:
+            $ref: "#/components/schemas/Observation/properties/subject"
+          type: array
+        prediction:
+          description: Describes the expected outcome for the subject.
+          items:
+            $ref: "#/components/schemas/RiskAssessment_Prediction"
+          type: array
+        mitigation: {}
+        note:
+          description: Additional comments about the risk assessment.
+          items: {}
+          type: array
+      additionalProperties: false
+      required:
+        - prediction
+        - basis
+        - resourceType
+    RiskAssessment_Prediction:
+      description: An assessment of the likely outcome(s) for a patient or other
+        subject as well as the likelihood of each outcome.
+      properties:
+        outcome:
+          $ref: "#/components/schemas/Observation/properties/code"
+        probabilityDecimal:
+          description: Indicates how likely the outcome is (in the specified timeframe).
+          pattern: ^-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?$
+          type: number
+        probabilityRange: {}
+        qualitativeRisk:
+          $ref: "#/components/schemas/Observation/properties/code"
+        relativeRisk: {}
+        whenPeriod: {}
+        whenRange:
+          $ref: "#/components/schemas/RiskAssessment_Prediction/properties/probabilityRan\
+            ge"
+        rationale:
+          $ref: "#/components/schemas/RiskAssessment/properties/mitigation"
+      additionalProperties: false
+    Observation:
+      description: Measurements and simple assertions made about a patient, device or
+        other subject.
+      properties:
+        resourceType:
+          description: This is a Observation resource
+          type: string
+          enum:
+            - Observation
+        id: {}
+        meta:
+          $ref: "#/components/schemas/RiskAssessment/properties/meta"
+        implicitRules: {}
+        _implicitRules:
+          $ref: "#/components/schemas/Observation/properties/_issued"
+        language:
+          $ref: "#/components/schemas/RiskAssessment/properties/language"
+        _language:
+          $ref: "#/components/schemas/Observation/properties/_issued"
+        text:
+          $ref: "#/components/schemas/RiskAssessment/properties/text"
+        extension:
+          description: May be used to represent additional information that is not part of
+            the basic definition of the resource. To make the use of extensions
+            safe and manageable, there is a strict set of governance  applied to
+            the definition and use of extensions. Though any implementer can
+            define an extension, there is a set of requirements that SHALL be
+            met as part of the definition of the extension.
+          items: {}
+          type: array
+        modifierExtension:
+          description: >-
+            May be used to represent additional information that is not part of
+            the basic definition of the resource and that modifies the
+            understanding of the element that contains it and/or the
+            understanding of the containing element's descendants. Usually
+            modifier elements provide negation or qualification. To make the use
+            of extensions safe and manageable, there is a strict set of
+            governance applied to the definition and use of extensions. Though
+            any implementer is allowed to define an extension, there is a set of
+            requirements that SHALL be met as part of the definition of the
+            extension. Applications processing a resource are required to check
+            for modifier extensions.
+
+
+            Modifier extensions SHALL NOT change the meaning of any elements on Resource or DomainResource (including cannot change the meaning of modifierExtension itself).
+          items:
+            $ref: "#/components/schemas/Observation/properties/extension/items"
+          type: array
+        identifier:
+          description: A unique identifier assigned to this observation.
+          items: {}
+          type: array
+        basedOn:
+          description: A plan, proposal or order that is fulfilled in whole or in part by
+            this event.  For example, a MedicationRequest may require a patient
+            to have laboratory test performed before  it is dispensed.
+          items:
+            $ref: "#/components/schemas/Observation/properties/subject"
+          type: array
+        partOf:
+          description: A larger event of which this particular Observation is a component
+            or step.  For example,  an observation as part of a procedure.
+          items:
+            $ref: "#/components/schemas/Observation/properties/subject"
+          type: array
+        status:
+          description: The status of the result value.
+          enum:
+            - registered
+            - preliminary
+            - final
+            - amended
+            - corrected
+            - cancelled
+            - entered-in-error
+            - unknown
+        _status:
+          $ref: "#/components/schemas/Observation/properties/_issued"
+        category:
+          description: A code that classifies the general type of observation being made.
+          items:
+            $ref: "#/components/schemas/Observation/properties/code"
+          type: array
+        code: {}
+        subject: {}
+        focus:
+          description: The actual focus of an observation when it is not the patient of
+            record representing something or someone associated with the patient
+            such as a spouse, parent, fetus, or donor. For example, fetus
+            observations in a mother's record.  The focus of an observation
+            could also be an existing condition,  an intervention, the subject's
+            diet,  another observation of the subject,  or a body structure such
+            as tumor or implanted device.   An example use case would be using
+            the Observation resource to capture whether the mother is trained to
+            change her child's tracheostomy tube. In this example, the child is
+            the patient of record and the mother is the focus.
+          items:
+            $ref: "#/components/schemas/Observation/properties/subject"
+          type: array
+        encounter:
+          $ref: "#/components/schemas/Observation/properties/subject"
+        effectiveDateTime:
+          description: The time or time-period the observed value is asserted as being
+            true. For biological subjects - e.g. human patients - this is
+            usually called the "physiologically relevant time". This is usually
+            either the time of the procedure or of specimen collection, but very
+            often the source of the date/time is not known, only the date/time
+            itself.
+          pattern: ^([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?$
+          type: string
+        _effectiveDateTime:
+          $ref: "#/components/schemas/Observation/properties/_issued"
+        effectivePeriod:
+          $ref: "#/components/schemas/RiskAssessment_Prediction/properties/whenPeriod"
+        effectiveTiming: {}
+        effectiveInstant:
+          description: The time or time-period the observed value is asserted as being
+            true. For biological subjects - e.g. human patients - this is
+            usually called the "physiologically relevant time". This is usually
+            either the time of the procedure or of specimen collection, but very
+            often the source of the date/time is not known, only the date/time
+            itself.
+          pattern: ^([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))$
+          type: string
+        _effectiveInstant:
+          $ref: "#/components/schemas/Observation/properties/_issued"
+        issued: {}
+        _issued: {}
+        performer:
+          description: Who was responsible for asserting the observed value as "true".
+          items:
+            $ref: "#/components/schemas/Observation/properties/subject"
+          type: array
+        valueQuantity: {}
+        valueCodeableConcept:
+          $ref: "#/components/schemas/Observation/properties/code"
+        valueString:
+          description: The information determined as a result of making the observation,
+            if the information has a simple value.
+          pattern: ^[ \r\n\t\S]+$
+          type: string
+        _valueString:
+          $ref: "#/components/schemas/Observation/properties/_issued"
+        valueBoolean:
+          description: The information determined as a result of making the observation,
+            if the information has a simple value.
+          pattern: ^true|false$
+          type: boolean
+        _valueBoolean:
+          $ref: "#/components/schemas/Observation/properties/_issued"
+        valueInteger:
+          description: The information determined as a result of making the observation,
+            if the information has a simple value.
+          pattern: ^-?([0]|([1-9][0-9]*))$
+          type: number
+        _valueInteger:
+          $ref: "#/components/schemas/Observation/properties/_issued"
+        valueRange:
+          $ref: "#/components/schemas/RiskAssessment_Prediction/properties/probabilityRan\
+            ge"
+        valueRatio: {}
+        valueSampledData: {}
+        valueTime:
+          description: The information determined as a result of making the observation,
+            if the information has a simple value.
+          pattern: ^([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?$
+          type: string
+        _valueTime:
+          $ref: "#/components/schemas/Observation/properties/_issued"
+        valueDateTime:
+          description: The information determined as a result of making the observation,
+            if the information has a simple value.
+          pattern: ^([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?$
+          type: string
+        _valueDateTime:
+          $ref: "#/components/schemas/Observation/properties/_issued"
+        valuePeriod:
+          $ref: "#/components/schemas/RiskAssessment_Prediction/properties/whenPeriod"
+        dataAbsentReason:
+          $ref: "#/components/schemas/Observation/properties/code"
+        interpretation:
+          description: A categorical assessment of an observation value.  For example,
+            high, low, normal.
+          items:
+            $ref: "#/components/schemas/Observation/properties/code"
+          type: array
+        note:
+          description: Comments about the observation or the results.
+          items:
+            $ref: "#/components/schemas/RiskAssessment/properties/note/items"
+          type: array
+        bodySite:
+          $ref: "#/components/schemas/Observation/properties/code"
+        method:
+          $ref: "#/components/schemas/Observation/properties/code"
+        specimen:
+          $ref: "#/components/schemas/Observation/properties/subject"
+        device:
+          $ref: "#/components/schemas/Observation/properties/subject"
+        referenceRange:
+          description: Guidance on how to interpret the value by comparison to a normal or
+            recommended range.  Multiple reference ranges are interpreted as an
+            "OR".   In other words, to represent two distinct target
+            populations, two `referenceRange` elements would be used.
+          items: {}
+          type: array
+        hasMember:
+          description: This observation is a group observation (e.g. a battery, a panel of
+            tests, a set of vital sign measurements) that includes the target as
+            a member of the group.
+          items:
+            $ref: "#/components/schemas/Observation/properties/subject"
+          type: array
+        derivedFrom:
+          description: The target resource that represents a measurement from which this
+            observation value is derived. For example, a calculated anion gap or
+            a fetal measurement based on an ultrasound image.
+          items:
+            $ref: "#/components/schemas/Observation/properties/subject"
+          type: array
+        component:
+          description: Some observations have multiple component observations.  These
+            component observations are expressed as separate code value pairs
+            that share the same attributes.  Examples include systolic and
+            diastolic component observations for blood pressure measurement and
+            multiple component observations for genetics observations.
+          items: {}
+          type: array
+      additionalProperties: false
       required:
         - code
-        - message
-      properties:
-        code:
-          type: integer
-          format: int32
-        message:
-          type: string
+        - resourceType
+    ResourceList:
+      oneOf:
+        - $ref: "#/components/schemas/Observation"
