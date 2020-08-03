@@ -11,6 +11,10 @@ info:
   title: Risk Stratification Service
   description: Provides risk stratification index values based on user parameters
   version: 0.1.0
+  contact:
+    name: Personal Demographics Service FHIR API Support
+    url: 'https://digital.nhs.uk/developer/help-and-support'
+    email: api.management@nhs.net
 tags:
   - name: covid
 paths:
