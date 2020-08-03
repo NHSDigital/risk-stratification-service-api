@@ -17,6 +17,7 @@ paths:
   /qcovid:
     post:
       summary: Calculates risk stratification index for COVID-19
+      operationId: qcovid-post
       tags:
        - covid
       requestBody:
