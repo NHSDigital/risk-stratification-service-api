@@ -11,6 +11,8 @@ info:
   title: Risk Stratification Service
   description: Provides risk stratification index values based on user parameters
   version: 0.1.0
+tags:
+  - name: risk-stratification
 paths:
   /qcovid:
     post:
