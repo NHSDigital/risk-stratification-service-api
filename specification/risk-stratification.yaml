@@ -12,11 +12,13 @@ info:
   description: Provides risk stratification index values based on user parameters
   version: 0.1.0
 tags:
-  - name: risk-stratification
+  - name: covid
 paths:
   /qcovid:
     post:
       summary: Calculates risk stratification index for COVID-19
+      tags:
+       - covid
       requestBody:
         content:
           application/json:
