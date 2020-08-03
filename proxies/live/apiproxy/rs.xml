@@ -1,4 +1,4 @@
-<APIProxy name="risk">
+<APIProxy name="rs">
   <!-- This is the root of the application -->
   <Description>Proxy to Risk Stratification Service endpoints.</Description>
 </APIProxy>

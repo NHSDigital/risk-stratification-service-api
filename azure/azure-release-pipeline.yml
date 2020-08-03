@@ -8,7 +8,7 @@ pr: none
 resources:
   pipelines:
     - pipeline: "risk-stratification"
-      source: "Risk-Stratification-Build"
+      source: "risk-stratification-Build"
       trigger:
         branches:
           include:
