@@ -1,0 +1,6 @@
+variables:
+  service_name: risk-stratification
+  short_service_name: rs
+  service_base_path: risk-stratification
+  product_display_name: Risk Stratification Service
+  product_description: The Risk Stratification Service calculates the risk to patients from conditions such as Covid19
