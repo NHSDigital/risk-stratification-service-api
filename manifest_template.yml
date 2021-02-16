@@ -1,0 +1,68 @@
+## Manifest template ##
+# To view the expanded version of this template locally, clone api-management-utils
+#
+#   $ cd /path/to/local/api-management-utils/ansible
+#   $ DIST_DIR=/path/to/this/repo make template-manifest
+#
+#
+APIGEE_ENVIRONMENTS:
+- display_name: Internal Development
+  name: internal-dev
+- display_name: Internal Development Sandbox
+  name: internal-dev-sandbox
+- display_name: Internal QA
+  name: internal-qa
+- display_name: Internal QA Sandbox
+  name: internal-qa-sandbox
+- display_name: Reference
+  name: ref
+---
+meta:
+  api:
+    name: risk-stratification
+    guid: 9f11c568-4447-4a27-ad02-d67a846b8d59
+    spec_guids: ['36823b1f-bcba-4335-8fd6-f3e06a21f3db']
+  schema_version: 1
+apigee:
+  environments:
+
+{% for ENV in APIGEE_ENVIRONMENTS %}
+{% set TITLE = 'Risk Stratification Service (' + ENV.display_name + ')' %}
+{% set DESCRIPTION = 'Risk Stratification Service - ' + ENV.display_name | lower + ' environment' %}
+{% set NAME = 'risk-stratification-' + ENV.name %}
+  - name: {{ ENV.name }}
+    products:
+      - name: {{ NAME }}
+        approvalType: {{ ENV.approval_type | default('auto') }}
+        attributes:
+          - name: access
+            value: public
+          - name: ratelimit
+            value: 5ps
+        description: {{ DESCRIPTION }}
+        displayName: {{ TITLE }}
+        environments: [ {{ ENV.name }} ]
+        proxies:
+          - risk-stratification-{{ ENV.name }}
+          - identity-service-{{ ENV.name }}
+{% if ENV.name == 'int' %}
+          - identity-service-int-no-smartcard
+{% endif %}
+        scopes:
+          - 'urn:nhsd:apim:app:level3:risk-stratification'
+          - 'urn:nhsd:apim:user-nhs-id:aal3:risk-stratification'
+        quota: '300'
+        quotaInterval: '1'
+        quotaTimeUnit: minute
+    specs:
+      - name: {{ NAME }}
+        path: risk-stratification.json
+    api_catalog:
+      - edgeAPIProductName: {{ NAME }}
+        anonAllowed: true
+        description: {{ DESCRIPTION }}
+        requireCallbackUrl: {{ ENV.require_callback_url | default(true) }}
+        title: {{ TITLE }}
+        visibility: {{ ENV.make_spec_visible | default(false) }}
+        specId: {{ NAME }}
+{% endfor %}
